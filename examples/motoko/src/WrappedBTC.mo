@@ -1,22 +1,25 @@
 import HashMap "mo:base/HashMap";
+import Result "mo:base/Result";
+import Types "./Types";
 import Debug "mo:base/Debug";
 import Hash "mo:base/Hash";
 import Accounts "./Account";
 import Principal "mo:base/Principal";
 import List "mo:base/List";
 import btc "canister:btc";
+import Account "./Account";
 import BtcEncryption "../../../tests/BitcoinEncryption";
 import Management "../../../tests/management";
+import AssocList "mo:base/AssocList";
 actor WrappedBitcoin{
   type Account=Accounts.Account;
-  let private_keys=["5JrVA61c5UMKV1hvHo3u1MJrjJhnXwPxQQS77EhH55Ctqh8djw8","L2C1QgyKqNgfV7BpEPAm6PVn2xW8zpXq6MojSbWdH18nGQF2wGsT","5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ",
-      "L5EZftvrYaSudiozVRzTqLcHLNDoVn7H5HSfM9BAN6tMJX8oTWz6","Kww4TxWXJBPRDqRihfFnqGVcwRZ8RxWpb5h2ud85Qpvrdh5cpmHs","KxJaFvseWstgLc6qxgaeDoKFCsxx18kg4Gw2CztCAqTuUK5s6rMU","L1QLxPRDiGi6Uvw37GDYGDYeWBWCRDdBwuNJZMYz5nLy7pCoxhbd"];
-  var private_key_index=0;
+  let canister_private_key="L5EZftvrYaSudiozVRzTqLcHLNDoVn7H5HSfM9BAN6tMJX8oTWz6";
   func hash_principal(_p:Principal): Hash.Hash{
     return Principal.hash(_p);
   };
-  let account_balance_hashmap=HashMap.HashMap<Principal,Nat64>(6,Principal.equal,hash_principal);
-  let account_hashmap=HashMap.HashMap<Principal,Account>(5,Principal.equal,hash_principal);
+  var account_balance_hashmap=HashMap.HashMap<Principal,Nat64>(6,Principal.equal,hash_principal);
+  var account_hashmap=HashMap.HashMap<Principal,Account>(5,Principal.equal,hash_principal);
+  let used_private_keys:AssocList.AssocList<Text,Nat64> = List.nil<(Text,Nat64)>();
 
   public func generate_private_key():async Text{
     let management_actor= actor("aaaaa-aa"):Management.Self; 
@@ -30,8 +33,6 @@ actor WrappedBitcoin{
     switch(account){
       case (null){
         var rand_addr=await generate_private_key();
-        //private_key_index:=private_key_index+1;
-        //let a=await Accounts.Account({bitcoin_canister_id=Principal.fromActor(btc)},private_keys[private_key_index-1]);
         let a=await Accounts.Account({bitcoin_canister_id=Principal.fromActor(btc)},rand_addr);
         account_hashmap.put(msg.caller,a);
         let acc_address=await a.btc_address();
@@ -90,6 +91,18 @@ actor WrappedBitcoin{
             Debug.trap("satoshi_error");
           };
   };
+  };
+  public shared(msg) func get_utxos():async Result.Result<Types.GetUtxosData, ?Types.GetUtxosError>{
+    let a_balance=account_hashmap.get(msg.caller);
+    switch(a_balance){
+      case(null){
+      return #err(null); 
+      };
+      case(?a_balance){
+	let utxos=await a_balance.get_utxos();
+	return utxos;
+      };
+    };
   };
   public shared(msg) func get_address_balance(_wif_private_key:Text):async (Text,Nat64){
         let a=await Accounts.Account({bitcoin_canister_id=Principal.fromActor(btc)},_wif_private_key);
