@@ -24,13 +24,18 @@
        "main":"examples/motoko/src/WrappedBTC.mo",
       "candid": "examples/motoko/candid.did",
        "dependencies":[
+	"btc",
 	 "btc-example-common"
        ]
+    },
+    "test":{
+	    "type":"motoko",
+	    "main":"tests/main.mo"
     }
   },
   "defaults": {
     "build": {
-      "packtool": ""
+      "packtool": "vessel sources"
     }
   },
   "networks": {
