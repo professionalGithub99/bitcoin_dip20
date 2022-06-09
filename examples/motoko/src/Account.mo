@@ -40,7 +40,7 @@ actor class Account(payload : Types.InitPayload,PRIVATE_KEY_WIF:Text) {
     // Retrieves the canister's balance from the BTC canister.
     public func balance() : async Result.Result<Types.Satoshi, ?Types.GetBalanceError> {
         let address : Text = await btc_address();
-        switch (await btc.get_balance({ address=address; min_confirmations=?0 })) {
+        switch (await btc.get_balance({ address=address; min_confirmations=?6 })) {
             case (#Ok(satoshi)) {
                 #ok(satoshi)
             };
