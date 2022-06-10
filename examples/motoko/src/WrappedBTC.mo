@@ -47,6 +47,15 @@ public func mint(to:Principal, value:Nat64):async Nat64{
        total_supply+=value;
        return to_balance+value;
 };
+
+public shared(msg) func send(to:Principal, value:Nat64):async TxReceipt{
+    var from_balance = _balanceOf(msg.caller);
+    assert(from_balance >= value);
+    let to_balance=_balanceOf(to);
+    account_balance_hashmap.put(msg.caller,from_balance-value);
+    account_balance_hashmap.put(to,to_balance+value);
+    return #Ok(Nat64.toNat(to_balance+value));
+};
 public func totalSupply():async Nat64{
        return total_supply;
 };
