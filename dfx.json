@@ -19,14 +19,28 @@
       "wasm": "target/wasm32-unknown-unknown/release/example-common.wasm",
       "build": "scripts/build-example-common.sh"
     },
-    "wrapped-btc-example":{
+    "btconicpexample":{
       "type":"motoko",
-       "main":"examples/motoko/src/WrappedBTC.mo",
+       "main":"examples/motoko/src/BTConICP.mo",
       "candid": "examples/motoko/candid.did",
        "dependencies":[
 	"btc",
 	 "btc-example-common"
        ]
+    },
+        "frontend_assets": {
+      "dependencies": [
+	      "btc",
+	 "btconicpexample"
+      ],
+      "frontend": {
+        "entrypoint": "src/frontend_assets/src/index.html"
+      },
+      "source": [
+        "src/frontend_assets/assets",
+        "dist/frontend_assets/"
+      ],
+      "type": "assets"
     },
     "test":{
 	    "type":"motoko",
