@@ -2,6 +2,12 @@
 // along with the typing needed for this canister.
 module Types {
 
+  public type TxSuccess = {
+  #TxSuccess:Principal
+  };
+  public type TxError = {
+  #TxError
+  };
     // Used to initialize the example dapp.
     public type InitPayload = {
         bitcoin_canister_id : Principal;

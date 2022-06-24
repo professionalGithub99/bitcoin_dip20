@@ -10,7 +10,11 @@ let
    , repo = "https://github.com/enzoh/motoko-sha.git"
    ,version = "master"
    , dependencies = ["base"]
-   }
+   },
+   {name = "edcsa",
+   repo = "https://github.com/herumi/ecdsa-motoko.git",
+   version ="master", 
+   dependencies = ["base","sha2"]}
     ] : List Package
 
 let

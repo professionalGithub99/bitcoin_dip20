@@ -28,6 +28,10 @@
 	 "btc-example-common"
        ]
     },
+    "btcbank":{
+	"type":"motoko",
+	"main":"examples/motoko/src/Bank.mo"
+    },
         "frontend_assets": {
       "dependencies": [
 	      "btc",

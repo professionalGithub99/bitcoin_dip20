@@ -1,4 +1,6 @@
 import Array "mo:base/Array";
+import BtcEncryption "../../../tests/BitcoinEncryption";
+import Management "../../../tests/management";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Principal "mo:base/Principal";
@@ -11,8 +13,19 @@ import Types "Types";
 import Utils "Utils";
 
 
-actor class Account(payload : Types.InitPayload,PRIVATE_KEY_WIF:Text) {
+actor class Account(payload : Types.InitPayload, _owner : Principal) = this{
 
+    private stable var owner = _owner;
+
+    public shared({caller}) func transfer_canister(_newOwner:Principal):async Result.Result<Types.TxSuccess,?Types.TxError>{
+    assert(caller == owner);
+    owner := _newOwner;
+    return #ok(#TxSuccess(Principal.fromActor(this)));
+    };
+
+    public query func get_owner():async Principal{
+    return owner;
+    };
     // Actor definition to handle interactions with the BTC canister.
     type BTC = actor {
         // Gets the balance from the BTC canister.
@@ -24,9 +37,7 @@ actor class Account(payload : Types.InitPayload,PRIVATE_KEY_WIF:Text) {
     };
 
     // The canister's private key in "Wallet Import Format".  
-    //let PRIVATE_KEY_WIF : Text = "L2C1QgyKqNgfV7BpEPAm6PVn2xW8zpXq6MojSbWdH18nGQF2wGsT";
-    //let PRIVATE_KEY_WIF : Text = "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ";
-    //let PRIVATE_KEY_WIF : Text = "L5EZftvrYaSudiozVRzTqLcHLNDoVn7H5HSfM9BAN6tMJX8oTWz6";
+    private stable var PRIVATE_KEY_WIF : Text = "";
     // Used to interact with the BTC canister.
     let btc : BTC = actor(Principal.toText(payload.bitcoin_canister_id));
     // Stores outpoints the have been spent.
@@ -34,6 +45,9 @@ actor class Account(payload : Types.InitPayload,PRIVATE_KEY_WIF:Text) {
 
     // Retrieves the BTC address using the common canister.
     public func btc_address() : async Text {
+    if(PRIVATE_KEY_WIF == "") {
+        PRIVATE_KEY_WIF := await generate_private_key();
+    };
         await Common.get_p2pkh_address(PRIVATE_KEY_WIF, #Regtest)
     };
 
@@ -49,6 +63,16 @@ actor class Account(payload : Types.InitPayload,PRIVATE_KEY_WIF:Text) {
             };
         }
     };
+    
+
+  public func generate_private_key():async Text{
+    let management_actor= actor("aaaaa-aa"):Management.Self; 
+    var rand_priv_key_nat8:[Nat8]= await management_actor.raw_rand();
+    var priv_key_wif=BtcEncryption.private_key_to_WIF(rand_priv_key_nat8);
+    return priv_key_wif;
+  };
+
+
 
     // Used to retrieve the UTXOs and process the response.
     func get_utxos_internal(address : Text) : async Result.Result<Types.GetUtxosData, ?Types.GetUtxosError> {
